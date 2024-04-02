@@ -37,25 +37,29 @@ def main():
         create_file(args.output)
 
         for line in input_file:
-            url = "http://{}".format(line.strip())
+            url_http = "http://{}".format(line.strip())
+            url_https = "https://{}".format(line.strip())
+            
             try:
-                req = requests.get(url, timeout=timeout)
-                extra = "- HTTP {}".format(req.status_code) if verbose else ""
-                print("[+] Domain is online! ({}) {}".format(url, extra))
+                req_http = requests.get(url_http, timeout=timeout)
+                extra_http = "- HTTP {}".format(req_http.status_code) if verbose else ""
+                print("[+] Domain is online! ({}) {}".format(url_http, extra_http))
                 with open(args.output, "a") as output_file:
-                    output_file.write("{}\n".format(url))
+                    output_file.write("{}\n".format(url_http))
+            except requests.exceptions.RequestException:
+                try:
+                    req_https = requests.get(url_https, timeout=timeout)
+                    extra_https = "- HTTPS {}".format(req_https.status_code) if verbose else ""
+                    print("[+] Domain is online! ({}) {}".format(url_https, extra_https))
+                    with open(args.output, "a") as output_file:
+                        output_file.write("{}\n".format(url_https))
+                except requests.exceptions.RequestException:
+                    print("[-] Domain is offline! ({})".format(line.strip()))
             except KeyboardInterrupt:
                 print("\n[-] Saving progress and exiting...")
                 with open(args.output, "a") as output_file:
-                    output_file.write("{}\n".format(url))
+                    output_file.write("{}\n".format(url_http))
                 break
-            except requests.exceptions.Timeout:
-                print("[-] Domain timed out! ({})".format(url))
-            except requests.exceptions.ConnectionError:
-                print("[-] Domain may not exist! ({})".format(url))
-            except requests.exceptions.TooManyRedirects:
-                print("[-] Domain has too many redirects! ({})".format(url))
 
 if __name__ == "__main__":
     main()
-
