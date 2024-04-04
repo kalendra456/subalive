@@ -32,16 +32,16 @@ def check_subdomain(url, remove_redirects, avoid_subdir):
     for protocol in ["http://", "https://"]:
         try:
             req = requests.get(protocol + url, timeout=timeout, allow_redirects=not remove_redirects)
-            extra = "- {} {}".format(protocol.upper(), req.status_code) if verbose else ""
-            print("[+] Domain is online! ({}{})".format(protocol + url, extra))
+            status = req.status_code if verbose else ""
+            print("[+] Domain is online! ({}{})".format(protocol + url, "- {} {}".format(protocol.upper(), status) if verbose else ""))
             if not remove_redirects or req.status_code < 300 or req.status_code >= 400:
                 if avoid_subdir and urlparse(req.url).netloc != urlparse(protocol + url).netloc:
                     print("[-] Avoided redirection to subdir! ({})".format(req.url))
                     continue
                 results.append(protocol + url)
             break  # Break the loop if successful request
-        except requests.exceptions.RequestException:
-            print("[-] Domain is offline! ({}{})".format(protocol + url, extra))
+        except requests.exceptions.RequestException as e:
+            print("[-] Domain is offline! ({}{})".format(protocol + url, "- {}".format(e) if verbose else ""))
             continue
     return results
 
