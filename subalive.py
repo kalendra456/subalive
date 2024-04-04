@@ -6,10 +6,11 @@ import requests
 import sys
 import argparse
 from concurrent.futures import ThreadPoolExecutor
+from urllib.parse import urlparse
 
 timeout = 3
 verbose = True
-version = "1.0.5"
+version = "1.0.6"
 banner = """
 ---------------------------------
 | s | u | b | a | l | i | v | e |
@@ -20,18 +21,23 @@ banner = """
       Updated by kalendra456
 """.format(version, sys.argv[0])
 
-usage = "\n [SYNTAX]  python {} target.txt -o output.txt [-rm] [-http] [-https]".format(sys.argv[0])
+usage = "\n [SYNTAX]  python {} target.txt -o output.txt [-rm] [-http] [-https] [-subdir]".format(sys.argv[0])
 
 def create_file(user_file):
     with open(user_file, "w") as output_file:
         output_file.close()
 
-def check_subdomain(url, remove_redirects):
+def check_subdomain(url, remove_redirects, avoid_subdir):
     try:
         req = requests.get(url, timeout=timeout, allow_redirects=not remove_redirects)
         extra = "- HTTP {}".format(req.status_code) if verbose else ""
         print("[+] Domain is online! ({}) {}".format(url, extra))
-        return url if not remove_redirects or req.status_code < 300 or req.status_code >= 400 else None
+        if not remove_redirects or req.status_code < 300 or req.status_code >= 400:
+            if avoid_subdir and urlparse(req.url).netloc != urlparse(url).netloc:
+                print("[-] Avoided redirection to subdir! ({})".format(req.url))
+                return None
+            return url
+        return None
     except requests.exceptions.RequestException:
         print("[-] Domain is offline! ({})".format(url))
         return None
@@ -43,6 +49,7 @@ def main():
     parser.add_argument("-rm", "--remove_redirects", action="store_true", help="Remove URLs that result in redirections (HTTP 3xx)")
     parser.add_argument("-http", "--http_only", action="store_true", help="Check only HTTP URLs")
     parser.add_argument("-https", "--https_only", action="store_true", help="Check only HTTPS URLs")
+    parser.add_argument("-subdir", "--avoid_subdir", action="store_true", help="Avoid redirections to subdir")
     args = parser.parse_args()
 
     if args.http_only and args.https_only:
@@ -62,7 +69,7 @@ def main():
             urls = ["http://{}".format(line.strip()) for line in input_file]
 
         with ThreadPoolExecutor(max_workers=10) as executor:
-            results = executor.map(lambda url: check_subdomain(url, args.remove_redirects), urls)
+            results = executor.map(lambda url: check_subdomain(url, args.remove_redirects, args.avoid_subdir), urls)
 
         with open(args.output, "a") as output_file:
             for result in results:
