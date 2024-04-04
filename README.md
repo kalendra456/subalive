@@ -4,12 +4,12 @@ Subalive is a Python script that checks the availability of subdomains listed in
 
 ## Usage
 
-python subalive.py target.txt -o output.txt
+python subalive.py target.txt -o output.txt -rm
 
 
 - `target.txt`: Input file containing subdomains to check.
 - `-o output.txt`: (Optional) Output file to save alive subdomains. If not provided, default filename is "alive.txt".
-
+- `-rm`: (Optional) to remove redirection 3xx
 ## Requirements
 
 - Python 3.x
