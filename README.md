@@ -9,7 +9,10 @@ python subalive.py target.txt -o output.txt -rm
 
 - `target.txt`: Input file containing subdomains to check.
 - `-o output.txt`: (Optional) Output file to save alive subdomains. If not provided, default filename is "alive.txt".
-- `-rm`: (Optional) to remove redirection 3xx
+- `-rm`: (Optional) to remove redirection 3xx.
+- `-subdir`: (Optional) to avoid redirections to a subdirectory.
+- `-https` : for https only
+- `-http` : for http only
 ## Requirements
 
 - Python 3.x
