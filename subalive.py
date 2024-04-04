@@ -20,7 +20,7 @@ banner = """
       Updated by kalendra456
 """.format(version, sys.argv[0])
 
-usage = "\n [SYNTAX]  python {} target.txt -o output.txt [-rm]".format(sys.argv[0])
+usage = "\n [SYNTAX]  python {} target.txt -o output.txt [-rm] [-http] [-https]".format(sys.argv[0])
 
 def create_file(user_file):
     with open(user_file, "w") as output_file:
@@ -41,14 +41,25 @@ def main():
     parser.add_argument("input_file", help="Input file containing subdomains")
     parser.add_argument("-o", "--output", help="Output file to save all subdomains", default="alive.txt")
     parser.add_argument("-rm", "--remove_redirects", action="store_true", help="Remove URLs that result in redirections (HTTP 3xx)")
+    parser.add_argument("-http", "--http_only", action="store_true", help="Check only HTTP URLs")
+    parser.add_argument("-https", "--https_only", action="store_true", help="Check only HTTPS URLs")
     args = parser.parse_args()
+
+    if args.http_only and args.https_only:
+        print("Error: -http and -https flags cannot be used together.")
+        sys.exit(1)
 
     print(banner)
 
     with open(args.input_file, "r") as input_file:
         create_file(args.output)
 
-        urls = ["http://{}".format(line.strip()) for line in input_file if line.strip()]
+        if args.http_only:
+            urls = ["http://{}".format(line.strip()) for line in input_file]
+        elif args.https_only:
+            urls = ["https://{}".format(line.strip()) for line in input_file]
+        else:
+            urls = ["http://{}".format(line.strip()) for line in input_file]
 
         with ThreadPoolExecutor(max_workers=10) as executor:
             results = executor.map(lambda url: check_subdomain(url, args.remove_redirects), urls)
